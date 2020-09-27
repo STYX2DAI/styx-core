@@ -1,6 +1,9 @@
+require('dotenv').config()
 require('babel-register');
 require('babel-polyfill');
 const HDWalletProvider = require('@truffle/hdwallet-provider')
+
+const { INFURA_PROJECT_ID, PRIVATE_KEY_KOVAN } = process.env
 
 module.exports = {
   networks: {

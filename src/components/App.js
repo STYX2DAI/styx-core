@@ -1,14 +1,15 @@
 import React, { Component } from 'react'
 import Web3 from 'web3'
-import STYX from '../abis/STYX.json'
+import STYX_ABI from '../abis/STYX.json'
 import TokenFarm from '../abis/TokenFarm.json'
 import ERC20 from '../abis/ERC20.json'
 import Navbar from './Navbar'
 import Main from './Main'
 import './App.css'
-import chainlink from '../chainlink.png'
+import dai from '../dai.png'
 
 class App extends Component {
+
   async componentWillMount() {
     await this.loadWeb3()
     await this.loadBlockchainData()
@@ -45,24 +46,22 @@ class App extends Component {
     const accounts = await web3.eth.getAccounts()
     this.setState({ account: accounts[0] })
     this.setState({
-      tokenAddress: '0xa36085F69e2889c224210F603D836748e7dC0088'
+      tokenAddress: '0x4f96fe3b7a6cf9725f59d353f723c1bdb64ca6aa'
     })
-    this.setState({ image: chainlink })
-    this.setState({ tokenName: 'LINK' })
+    this.setState({ image: dai })
+    this.setState({ tokenName: 'DAI' })
 
     const networkId = await web3.eth.net.getId()
-
-    // Load DAI as the starting default Token Data
-    // const daiTokenData = DaiToken.networks[networkId];
     const erc20 = new web3.eth.Contract(ERC20.abi, this.state.tokenAddress)
     this.setState({ erc20 })
     let erc20Balance = await erc20.methods.balanceOf(this.state.account).call()
     this.setState({ erc20Balance: erc20Balance.toString() })
 
     // Load STYX
-    const STYXData = STYX.networks[networkId]
+    const STYXData = STYX_ABI.networks[networkId]
     if (STYXData) {
-      const STYX = new web3.eth.Contract(STYX.abi, STYXData.address)
+      // console.log(STYX.networks)
+      const STYX = new web3.eth.Contract(STYX_ABI.abi, STYXData.address)
       this.setState({ STYXAddress: STYXData.address })
       this.setState({ STYX })
       let STYXBalance = await STYX.methods.balanceOf(this.state.account).call()
@@ -132,8 +131,8 @@ class App extends Component {
       STYXBalance: '0',
       stakingBalance: '0',
       loading: true,
-      image: chainlink,
-      tokenName: 'LINK'
+      image: dai,
+      tokenName: 'DAI'
     }
   }
 
@@ -169,11 +168,7 @@ class App extends Component {
         <div className="container-fluid mt-5">
           <div className="row">
             <main role="main" className="col-lg-12 ml-auto mr-auto" style={{ maxWidth: '600px' }}>
-              <div className="content mr-auto ml-auto">
-                <a href="https://alphachain.io" target="_blank" rel="noopener noreferrer"></a>
-
-                {content}
-              </div>
+              <div className="content mr-auto ml-auto">{content}</div>
             </main>
           </div>
         </div>

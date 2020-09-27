@@ -4,70 +4,47 @@ import "@chainlink/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol";
 import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/presets/ERC20PresetMinterPauser.sol";
 
 contract TokenFarm is ChainlinkClient, Ownable {
-    string public name = "Dapp Token Farm";
-    IERC20 public STYX;
+    string public name = "STYX Token Farm";
+    ERC20PresetMinterPauser public STYX;
 
     address[] public stakers;
     // token > address
     mapping(address => mapping(address => uint256)) public stakingBalance;
     mapping(address => uint256) public uniqueTokensStaked;
-    mapping(address => address) public tokenPriceFeedMapping;
-    address[] allowedTokens;
 
     constructor(address _STYXAddress) public {
-        STYX = IERC20(_STYXAddress);
-    }
-
-    function addAllowedTokens(address token) public onlyOwner {
-        allowedTokens.push(token);
-    }
-
-    function setPriceFeedContract(address token, address priceFeed) public onlyOwner {
-        tokenPriceFeedMapping[token] = priceFeed;
+        STYX = ERC20PresetMinterPauser(_STYXAddress);
     }
 
     function stakeTokens(uint256 _amount, address token) public {
-        // Require amount greater than 0
         require(_amount > 0, "amount cannot be 0");
-        if (tokenIsAllowed(token)) {
-            updateUniqueTokensStaked(msg.sender, token);
-            IERC20(token).transferFrom(msg.sender, address(this), _amount);
-            stakingBalance[token][msg.sender] = stakingBalance[token][msg.sender] + _amount;
-            if (uniqueTokensStaked[msg.sender] == 1) {
-                stakers.push(msg.sender);
-            }
+        updateUniqueTokensStaked(msg.sender, token);
+        IERC20(token).transferFrom(msg.sender, address(this), _amount);
+        stakingBalance[token][msg.sender] = stakingBalance[token][msg.sender] + _amount;
+        if (uniqueTokensStaked[msg.sender] == 1) {
+            stakers.push(msg.sender);
         }
+
+        issueTokens(msg.sender, _amount);
     }
 
-    // Unstaking Tokens (Withdraw)
     function unstakeTokens(address token) public {
-        // Fetch staking balance
         uint256 balance = stakingBalance[token][msg.sender];
         require(balance > 0, "staking balance cannot be 0");
         IERC20(token).transfer(msg.sender, balance);
         stakingBalance[token][msg.sender] = 0;
         uniqueTokensStaked[msg.sender] = uniqueTokensStaked[msg.sender] - 1;
-    }
 
-    function getUserTotalValue(address user) public view returns (uint256) {
-        uint256 totalValue = 0;
-        if (uniqueTokensStaked[user] > 0) {
-            for (uint256 allowedTokensIndex = 0; allowedTokensIndex < allowedTokens.length; allowedTokensIndex++) {
-                totalValue = totalValue + getUserStakingBalanceEthValue(user, allowedTokens[allowedTokensIndex]);
-            }
-        }
-        return totalValue;
-    }
+        // uint256 balanceSTYX = STYX.balanceOf(msg.sender);
+        // STYX.approve(address(this), balanceSTYX);
+        // STYX.transferFrom(msg.sender, address(this), balanceSTYX);
+        // burnTokens(msg.sender);
 
-    function tokenIsAllowed(address token) public returns (bool) {
-        for (uint256 allowedTokensIndex = 0; allowedTokensIndex < allowedTokens.length; allowedTokensIndex++) {
-            if (allowedTokens[allowedTokensIndex] == token) {
-                return true;
-            }
-        }
-        return false;
+        uint256 balanceSTYX = STYX.balanceOf(address(msg.sender));
+        STYX.transferFrom(msg.sender, address(this), balanceSTYX);
     }
 
     function updateUniqueTokensStaked(address user, address token) internal {
@@ -76,27 +53,49 @@ contract TokenFarm is ChainlinkClient, Ownable {
         }
     }
 
-    function getUserStakingBalanceEthValue(address user, address token) public view returns (uint256) {
-        if (uniqueTokensStaked[user] <= 0) {
-            return 0;
-        }
-        return (stakingBalance[token][user] * getTokenEthPrice(token)) / (10**18);
+    function issueTokens(address recipient, uint256 amount) internal {
+        // STYX.mint(recipient, getStyxPrice());
+        STYX.transfer(recipient, getStyxPrice(amount));
     }
 
-    // Issuing Tokens
-    function issueTokens() public onlyOwner {
-        // Issue tokens to all stakers
-        for (uint256 stakersIndex = 0; stakersIndex < stakers.length; stakersIndex++) {
-            address recipient = stakers[stakersIndex];
-            STYX.transfer(recipient, getUserTotalValue(recipient));
-        }
-    }
+    // function burnTokens(address recipient) internal {
+    //     // STYX.transfer(recipient, getStyxPrice());
+    //     // STYX.burn(recipient, getStyxPrice());
+    // }
 
-    function getTokenEthPrice(address token) public view returns (uint256) {
-        address priceFeedAddress = tokenPriceFeedMapping[token];
-        AggregatorV3Interface priceFeed = AggregatorV3Interface(priceFeedAddress);
-        (uint80 roundID, int256 price, uint256 startedAt, uint256 timeStamp, uint80 answeredInRound) = priceFeed
-            .latestRoundData();
-        return uint256(price);
+    function getStyxPrice(uint256 amount) public view returns (uint256) {
+        // address priceFeedAddress_DAI_USD = 0x777A68032a88E5A84678A77Af2CD65A7b3c0775a;
+        // address priceFeedAddress_EUR_USD = 0x0c15Ab9A0DB086e062194c273CC79f41597Bbf13;
+
+        AggregatorV3Interface priceFeed_DAI_USD = AggregatorV3Interface(0x777A68032a88E5A84678A77Af2CD65A7b3c0775a);
+        (
+            uint80 roundID_DAI_USD,
+            int256 price_DAI_USD,
+            uint256 startedAt_DAI_USD,
+            uint256 timeStamp_DAI_USD,
+            uint80 answeredInRound_DAI_USD
+        ) = priceFeed_DAI_USD.latestRoundData();
+
+        AggregatorV3Interface priceFeed_EUR_USD = AggregatorV3Interface(0x0c15Ab9A0DB086e062194c273CC79f41597Bbf13);
+        (
+            uint80 roundID_EUR_USD,
+            int256 price_EUR_USD,
+            uint256 startedAt_EUR_USD,
+            uint256 timeStamp_EUR_USD,
+            uint80 answeredInRound_EUR_USD
+        ) = priceFeed_EUR_USD.latestRoundData();
+
+        // 1 euro = x DAI
+
+        // uint256 calc_EUR_USD = uint256(price_EUR_USD * (10**10));
+        // uint256 calc_DAI_USD = uint256(price_DAI_USD * (10**10));
+        // uint256 price = (calc_EUR_USD / calc_DAI_USD);
+
+        // return amount * price;
+
+        return amount * (uint256(price_EUR_USD * (10**10)) / uint256(price_DAI_USD * (10**10)));
     }
 }
+
+// 116217500/106217500
+// 1,0941464448

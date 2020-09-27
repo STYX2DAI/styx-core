@@ -1,17 +1,16 @@
 import React, { Component } from 'react'
-import dai from '../dai.png'
-import chainlink from '../chainlink.png'
-import dappImage from '../dapp.png'
 
 class Main extends Component {
   render() {
+    console.log('this.props.STYXBalance', this.props.STYXBalance)
+
     return (
       <div id="content" className="mt-3">
         <table className="table table-borderless text-muted text-center">
           <thead>
             <tr>
               <th scope="col">Staking Balance {this.props.tokenName}</th>
-              <th scope="col">Reward Balance</th>
+              <th scope="col">STYX Balance</th>
             </tr>
           </thead>
           <tbody>
@@ -19,7 +18,7 @@ class Main extends Component {
               <td>
                 {window.web3.utils.fromWei(this.props.stakingBalance, 'Ether')} {this.props.tokenName}
               </td>
-              <td>{window.web3.utils.fromWei(this.props.STYXBalance, 'Ether')} DAPP</td>
+              <td>{window.web3.utils.fromWei(this.props.STYXBalance, 'Ether')} STYX</td>
             </tr>
           </tbody>
         </table>
@@ -41,7 +40,7 @@ class Main extends Component {
                   <b>Stake Tokens</b>
                 </label>
                 <span className="float-right text-muted">
-                  {window.web3.utils.fromWei(this.props.erc20Balance, 'Ether')}
+                  max {window.web3.utils.fromWei(this.props.erc20Balance, 'Ether')}
                 </span>
               </div>
               <div className="input-group mb-4">
@@ -61,46 +60,6 @@ class Main extends Component {
                   </div>
                 </div>
               </div>
-              <div className="input-group mb-4">
-                <form>
-                  <label for="chainlink"> &nbsp; </label>
-                  <input
-                    type="button"
-                    id="chainlink"
-                    name="token"
-                    value="Chainlink"
-                    onClick={event => {
-                      event.preventDefault()
-                      this.props.changeToken('0xa36085F69e2889c224210F603D836748e7dC0088', 'LINK', chainlink)
-                      //this.props.updateBalance(this.props.tokenAddress);
-                    }}
-                  />
-                  <label for="fau"> &nbsp;&nbsp;&nbsp;&nbsp;</label>
-                  <input
-                    type="button"
-                    id="fau"
-                    name="token"
-                    value="fau"
-                    onClick={event => {
-                      event.preventDefault()
-                      this.props.changeToken('0xfab46e002bbf0b4509813474841e0716e6730136', 'FAU', dai)
-                      //this.props.updateBalance(this.props.tokenAddress);
-                    }}
-                  />
-                  <label for="STYX"> &nbsp;&nbsp;&nbsp; &nbsp;</label>
-                  <input
-                    type="button"
-                    id="STYX"
-                    name="token"
-                    value="STYX"
-                    onClick={event => {
-                      event.preventDefault()
-                      this.props.changeToken(this.props.STYXAddress, 'DAPP', dappImage)
-                      //this.props.updateBalance(this.props.tokenAddress);
-                    }}
-                  />
-                </form>
-              </div>
               <button type="submit" className="btn btn-primary btn-block btn-lg">
                 STAKE!
               </button>
@@ -113,7 +72,7 @@ class Main extends Component {
                 this.props.unstakeTokens(this.props.tokenAddress)
               }}
             >
-              UN-STAKE...
+              UNSTAKE
             </button>
           </div>
         </div>
